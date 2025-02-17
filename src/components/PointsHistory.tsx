@@ -2,21 +2,33 @@ import React from 'react';
 import { format } from 'date-fns';
 import { History, Star, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getPointsHistory, isAdmin, deletePoints, updatePoints } from '../lib/storage';
+import api from '../api';
 
 export default function PointsHistory() {
-  const history = getPointsHistory();
-  const isAdminUser = isAdmin();
+  const [history, setHistory] = React.useState<any[]>([]);
   const [editingPoint, setEditingPoint] = React.useState<string | null>(null);
   const [editForm, setEditForm] = React.useState({ points: 0, comment: '' });
 
-  const handleDelete = (pointId: string) => {
-    if (confirm('Are you sure you want to delete this points entry?')) {
+  React.useEffect(() => {
+    const fetchHistory = async () => {
       try {
-        deletePoints(pointId);
-        toast.success('Points entry deleted successfully');
-      } catch (error: any) {
-        toast.error(error.message);
+        const { data } = await api.get('/points/history');
+        setHistory(data);
+      } catch (err) {
+        toast.error('Failed to load history');
+      }
+    };
+    fetchHistory();
+  }, []);
+
+  const handleDelete = async (pointId: string) => {
+    if (confirm('Are you sure?')) {
+      try {
+        await api.delete(`/points/${pointId}`);
+        setHistory(prev => prev.filter(p => p._id !== pointId));
+        toast.success('Points deleted');
+      } catch (err) {
+        toast.error('Delete failed');
       }
     }
   };
@@ -26,13 +38,16 @@ export default function PointsHistory() {
     setEditForm({ points: currentPoints, comment: currentComment });
   };
 
-  const handleUpdate = (pointId: string) => {
+  const handleUpdate = async (pointId: string) => {
     try {
-      updatePoints(pointId, editForm);
+      await api.patch(`/points/${pointId}`, editForm);
+      setHistory(prev => prev.map(p => 
+        p._id === pointId ? { ...p, ...editForm } : p
+      ));
       setEditingPoint(null);
-      toast.success('Points entry updated successfully');
-    } catch (error: any) {
-      toast.error(error.message);
+      toast.success('Points updated');
+    } catch (err) {
+      toast.error('Update failed');
     }
   };
 
@@ -63,7 +78,7 @@ export default function PointsHistory() {
                 <p className="text-sm text-gray-500">Student ID: {entry.student.studentId}</p>
               </div>
               <div className="text-right flex items-start space-x-2">
-                {isAdminUser && (
+                {entry.isAdmin && (
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleEdit(entry.id, entry.points, entry.comment)}

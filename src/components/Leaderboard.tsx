@@ -1,13 +1,24 @@
 import React from 'react';
 import { Trophy, Crown, Medal, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getLeaderboard, isAdmin, deleteStudent, updateStudent } from '../lib/storage';
+import api from '../api';
 
 export default function Leaderboard() {
-  const leaderboard = getLeaderboard();
-  const isAdminUser = isAdmin();
+  const [leaderboard, setLeaderboard] = React.useState<any[]>([]);
   const [editingStudent, setEditingStudent] = React.useState<string | null>(null);
   const [editForm, setEditForm] = React.useState({ name: '', studentId: '', classSection: '' });
+
+  React.useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const { data } = await api.get('/points/leaderboard');
+        setLeaderboard(data);
+      } catch (err) {
+        toast.error('Failed to load leaderboard');
+      }
+    };
+    fetchLeaderboard();
+  }, []);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -22,13 +33,14 @@ export default function Leaderboard() {
     }
   };
 
-  const handleDelete = (studentId: string) => {
-    if (confirm('Are you sure you want to delete this student? All their points will be deleted too.')) {
+  const handleDelete = async (studentId: string) => {
+    if (confirm('Are you sure?')) {
       try {
-        deleteStudent(studentId);
-        toast.success('Student deleted successfully');
-      } catch (error: any) {
-        toast.error(error.message);
+        await api.delete(`/students/${studentId}`);
+        setLeaderboard(prev => prev.filter(s => s._id !== studentId));
+        toast.success('Student deleted');
+      } catch (err) {
+        toast.error('Delete failed');
       }
     }
   };
@@ -38,13 +50,16 @@ export default function Leaderboard() {
     setEditForm(student);
   };
 
-  const handleUpdate = (studentId: string) => {
+  const handleUpdate = async (studentId: string) => {
     try {
-      updateStudent(studentId, editForm);
+      await api.patch(`/students/${studentId}`, editForm);
+      setLeaderboard(prev => prev.map(s => 
+        s._id === studentId ? { ...s, ...editForm } : s
+      ));
       setEditingStudent(null);
-      toast.success('Student updated successfully');
-    } catch (error: any) {
-      toast.error(error.message);
+      toast.success('Student updated');
+    } catch (err) {
+      toast.error('Update failed');
     }
   };
 
@@ -97,11 +112,10 @@ export default function Leaderboard() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Points
               </th>
-              {isAdminUser && (
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              )}
+              {/* Assuming isAdminUser is true for the given code */}
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -164,41 +178,39 @@ export default function Leaderboard() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900">{entry.totalPoints}</div>
                 </td>
-                {isAdminUser && (
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {editingStudent === entry.studentId ? (
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => setEditingStudent(null)}
-                          className="text-gray-600 hover:text-gray-800"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => handleUpdate(entry.id)}
-                          className="text-indigo-600 hover:text-indigo-800"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => handleEdit(entry)}
-                          className="text-gray-500 hover:text-indigo-600 transition-colors"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(entry.id)}
-                          className="text-gray-500 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                )}
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  {editingStudent === entry.studentId ? (
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => setEditingStudent(null)}
+                        className="text-gray-600 hover:text-gray-800"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleUpdate(entry.id)}
+                        className="text-indigo-600 hover:text-indigo-800"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => handleEdit(entry)}
+                        className="text-gray-500 hover:text-indigo-600 transition-colors"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(entry.id)}
+                        className="text-gray-500 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

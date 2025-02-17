@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { PlusCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { addPoints } from '../lib/storage';
+import api from '../api';
 
 export default function AddPoints() {
   const [loading, setLoading] = useState(false);
   const [points, setPoints] = useState(1);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -16,13 +17,15 @@ export default function AddPoints() {
     const reason = formData.get('reason') as string;
 
     try {
-      const comment = `I was given ${pointsValue} points for ${reason} in class`;
-      addPoints(pointsValue, comment);
+      await api.post('/points', {
+        points: pointsValue,
+        comment: `Points for ${reason}`
+      });
       toast.success('Points added successfully!');
       e.currentTarget.reset();
       setPoints(1);
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.error || 'Failed to add points');
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { signIn, signUp } from '../lib/storage';
+import api from '../api';
+import { useAuthStore } from '../stores/authStore';
 import { Trophy, Users, BookOpen, GraduationCap } from 'lucide-react';
 
 interface AuthProps {
@@ -28,22 +29,25 @@ export default function Auth({ onSignIn }: AuthProps) {
         const name = formData.get('name') as string;
         const section = formData.get('section') as string;
 
-        signUp({
-          email,
+        const { data } = await api.post('/auth/register', {
           studentId,
           name,
           classSection: section,
+          email,
+          password
         });
+        useAuthStore.getState().login(data.student, data.token);
         toast.success('Account created successfully!');
+        onSignIn();
       } else {
-        const user = signIn(email, password);
-        if (!user) throw new Error('Invalid credentials');
+        const { data } = await api.post('/auth/login', { email, password });
+        useAuthStore.getState().login(data.student, data.token);
         toast.success('Welcome back!');
+        onSignIn();
       }
-      onSignIn();
     } catch (err: any) {
-      setError(err.message);
-      toast.error(err.message);
+      setError(err.response?.data?.error || 'An error occurred');
+      toast.error(err.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);
     }

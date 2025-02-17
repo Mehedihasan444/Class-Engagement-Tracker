@@ -1,29 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Trophy, Award, History, LogIn, UserPlus, GanttChartSquare as ChartSquare } from 'lucide-react';
 import { Toaster } from 'sonner';
-import { getCurrentUser, signOut } from './lib/storage';
+import {  signOut } from './lib/storage';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './stores/authStore';
 import Auth from './components/Auth';
+import Dashboard from './components/Dashboard';
 import Leaderboard from './components/Leaderboard';
 import PointsHistory from './components/PointsHistory';
 import AddPoints from './components/AddPoints';
 import Statistics from './components/Statistics';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
-  const [user, setUser] = useState(getCurrentUser());
+  const { student, initialize } = useAuthStore();
   const [view, setView] = useState<'leaderboard' | 'history' | 'add' | 'stats'>('leaderboard');
 
   useEffect(() => {
-    const checkUser = () => setUser(getCurrentUser());
-    window.addEventListener('storage', checkUser);
-    return () => window.removeEventListener('storage', checkUser);
-  }, []);
+    initialize();
+  }, [initialize]);
 
-  if (!user) {
+  if (!student) {
     return (
-      <>
-        <Toaster position="top-right" />
-        <Auth onSignIn={() => setUser(getCurrentUser())} />
-      </>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Auth onSignIn={() => window.location.href = '/dashboard'} />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Leaderboard />} />
+            <Route path="add-points" element={<AddPoints />} />
+            <Route path="history" element={<PointsHistory />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
     );
   }
 
@@ -73,7 +86,7 @@ function App() {
               <button
                 onClick={() => {
                   signOut();
-                  setUser(null);
+                  window.location.href = '/login';
                 }}
                 className="px-3 py-2 rounded-md hover:bg-indigo-700"
               >
