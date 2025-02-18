@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from 'zustand';
+import api from '../api';
 
 interface AuthState {
   student: null | { 
@@ -33,6 +34,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     const token = localStorage.getItem('token');
     const student = JSON.parse(localStorage.getItem('student') || 'null');
     if (token && student) {
+      // Verify status on initial load
+      api.get('/auth/verify').catch(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('student');
+      });
       set({ student, token });
     }
   }
