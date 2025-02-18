@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/authStore';
 import { ChevronDown, LogOut, User, Bell } from 'lucide-react';
 import api from '../api';
 
-export default function Navbar() {
+export default function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }: { isMobileMenuOpen: boolean, setIsMobileMenuOpen: (isMobileMenuOpen: boolean) => void }) {
   const { student, logout } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -38,6 +38,19 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
               {/* <span className="ml-2 text-xl font-bold">Class Engagement Tracker</span> */}
+                  {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed  p-2  text-white bg-indigo-600 rounded-md"
+      >
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {isMobileMenuOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          )}
+        </svg>
+      </button>
           
           </div>
           
