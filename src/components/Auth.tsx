@@ -4,50 +4,40 @@ import { toast } from 'sonner';
 import api from '../api';
 import { useAuthStore } from '../stores/authStore';
 import { Trophy, Users, BookOpen, GraduationCap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import GoogleLoginButton from './GoogleLoginButton';
 
-interface AuthProps {
-  onSignIn: () => void;
-}
-
-export default function Auth({ onSignIn }: AuthProps) {
+export default function Auth() {
+  const { login } = useAuthStore();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    studentId: '',
+    name: '',
+    email: '',
+    password: '',
+    classSection: ''
+  });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-
     try {
-      if (isSignUp) {
-        const studentId = formData.get('studentId') as string;
-        const name = formData.get('name') as string;
-        const section = formData.get('section') as string;
+      const endpoint = isSignUp ? '/auth/register' : '/auth/login';
+      const { data } = await api.post(endpoint, isSignUp ? formData : {
+        email: formData.email,
+        password: formData.password
+      });
 
-        const { data } = await api.post('/auth/register', {
-          studentId,
-          name,
-          classSection: section,
-          email,
-          password
-        });
-        useAuthStore.getState().login(data.student, data.token);
-        toast.success('Account created successfully!');
-        onSignIn();
-      } else {
-        const { data } = await api.post('/auth/login', { email, password });
-        useAuthStore.getState().login(data.student, data.token);
-        toast.success('Welcome back!');
-        onSignIn();
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'An error occurred');
-      toast.error(err.response?.data?.error || 'Login failed');
+      login(data.student, data.token);
+      navigate('/dashboard');
+    } catch (error: any) {
+      setError(error.response?.data?.error || 'Authentication failed');
+      toast.error(error.response?.data?.error || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -146,75 +136,96 @@ export default function Auth({ onSignIn }: AuthProps) {
               </div>
 
               <form className="space-y-6" onSubmit={handleSubmit}>
-                {isSignUp && (
-                  <>
-                    <div>
-                      <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
-                        Student ID
-                      </label>
-                      <input
-                        id="studentId"
-                        name="studentId"
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                        placeholder="Enter your student ID"
-                      />
+                <div className="space-y-4">
+                  <GoogleLoginButton />
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
                     </div>
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                        Full Name
-                      </label>
-                      <input
-                        id="name"
-                        name="name"
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                        placeholder="Enter your full name"
-                      />
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">Or continue with email</span>
                     </div>
-                    <div>
-                      <label htmlFor="section" className="block text-sm font-medium text-gray-700">
-                        Class Section
-                      </label>
-                      <input
-                        id="section"
-                        name="section"
-                        type="text"
-                        required
-                        className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                        placeholder="Enter your class section"
-                      />
-                    </div>
-                  </>
-                )}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                    Email address
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                    placeholder="Enter your email"
-                  />
-                </div>
+                  </div>
+                  {isSignUp && (
+                    <>
+                      <div>
+                        <label htmlFor="studentId" className="block text-sm font-medium text-gray-700">
+                          Student ID
+                        </label>
+                        <input
+                          id="studentId"
+                          name="studentId"
+                          type="text"
+                          required
+                          className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                          placeholder="Enter your student ID"
+                          value={formData.studentId}
+                          onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                          Full Name
+                        </label>
+                        <input
+                          id="name"
+                          name="name"
+                          type="text"
+                          required
+                          className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                          placeholder="Enter your full name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="section" className="block text-sm font-medium text-gray-700">
+                          Class Section
+                        </label>
+                        <input
+                          id="section"
+                          name="section"
+                          type="text"
+                          required
+                          className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                          placeholder="Enter your class section"
+                          value={formData.classSection}
+                          onChange={(e) => setFormData({ ...formData, classSection: e.target.value })}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email address
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                    placeholder="Enter your password"
-                  />
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      required
+                      className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                      placeholder="Enter your password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    />
+                  </div>
                 </div>
 
                 {error && (

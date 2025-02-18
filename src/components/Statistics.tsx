@@ -1,4 +1,4 @@
-import React from 'react';
+import  { useState, useEffect } from 'react';
 import { GanttChartSquare as ChartSquare } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -12,9 +12,11 @@ import {
   LineElement,
   ArcElement,
 } from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line as ChartJSLine, Doughnut } from 'react-chartjs-2';
 import { format, startOfWeek, eachDayOfInterval, subDays } from 'date-fns';
 import { getPointsHistory, getLeaderboard } from '../lib/storage';
+import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip as ToolTip } from 'recharts';
+import api from '../api';
 
 ChartJS.register(
   CategoryScale,
@@ -28,9 +30,33 @@ ChartJS.register(
   Legend
 );
 
+interface StatData {
+  day: string;
+  points: number;
+}
+
+interface Stats {
+  weekly: Array<{ day: string; points: number }>;
+  monthly: Array<{ day: string; points: number }>;
+  averages: { daily: number; weekly: number };
+}
+
 export default function Statistics() {
   const history = getPointsHistory();
   const leaderboard = getLeaderboard();
+  const [stats, setStats] = useState<Stats>({
+    weekly: [] as StatData[],
+    monthly: [] as StatData[],
+    averages: { daily: 0, weekly: 0 }
+  });
+
+  useEffect(() => {
+    const loadStats = async () => {
+      const { data } = await api.get('/points/statistics');
+      setStats(data);
+    };
+    loadStats();
+  }, []);
 
   // Weekly Activity Chart Data
   const last7Days = eachDayOfInterval({
@@ -119,7 +145,43 @@ export default function Statistics() {
   , dailyPoints[0]);
 
   return (
-    <div className="space-y-6">
+
+    <div className="space-y-8 h-full overflow-y-auto">
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h3 className="text-xl font-bold mb-4">Weekly Points Trend</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={stats.weekly}>
+              <XAxis dataKey="day" />
+              <YAxis />
+              <ToolTip />
+              <Line type="monotone" dataKey="points" stroke="#4f46e5" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h3 className="font-semibold mb-2">Monthly Total</h3>
+          <div className="text-3xl font-bold text-indigo-600">
+            {stats.monthly.reduce((sum, day) => sum + day.points, 0)}
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h3 className="font-semibold mb-2">Daily Average</h3>
+          <div className="text-3xl font-bold text-green-600">
+            {stats.averages.daily || 0}
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h3 className="font-semibold mb-2">Weekly Average</h3>
+          <div className="text-3xl font-bold text-blue-600">
+            {stats.averages.weekly || 0}
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-2xl font-bold mb-6 flex items-center">
           <ChartSquare className="h-6 w-6 mr-2 text-indigo-500" />
@@ -152,7 +214,7 @@ export default function Statistics() {
           {/* Weekly Activity Chart */}
           <div className="bg-white rounded-lg p-4 border">
             <h3 className="text-lg font-semibold mb-4">Weekly Activity</h3>
-            <Line
+            <ChartJSLine
               data={weeklyActivityData}
               options={{
                 responsive: true,

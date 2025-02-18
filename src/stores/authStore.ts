@@ -1,7 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from 'zustand';
 
 interface AuthState {
-  student: null | { _id: string; name: string; role: string };
+  student: null | { 
+    _id: string; 
+    name: string; 
+    role: string;
+    email?: string;
+    classSection?: string;
+    avatarUrl?: string;
+  };
   token: string | null;
   login: (student: any, token: string) => void;
   logout: () => void;
