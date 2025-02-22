@@ -11,6 +11,7 @@ import Statistics from './components/Statistics';
 import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/Profile';
 import AdminPanel from './components/AdminPanel';
+import GoogleCallback from './components/GoogleCallback';
 
 function App() {
   const { initialize } = useAuthStore();
@@ -57,6 +58,11 @@ function App() {
           <AdminPanel />
       } />
         </Route>
+
+        <Route 
+          path="/auth/google/callback" 
+          element={<GoogleCallback />} 
+        />
       </Routes>
     </BrowserRouter>
   );

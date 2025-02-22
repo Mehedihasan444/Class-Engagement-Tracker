@@ -31,11 +31,12 @@ export default function Leaderboard() {
 
   React.useEffect(() => {
     const fetchSections = async () => {
-      const { data } = await api.get('/class-sections');
+      const { data } = await api.get('/students/class-sections');
       setSections(data);
     };
     fetchSections();
   }, []);
+
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
