@@ -37,36 +37,23 @@ export default function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }: { isMo
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-              {/* <span className="ml-2 text-xl font-bold">Class Engagement Tracker</span> */}
-                  {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed  p-2  text-white bg-indigo-600 rounded-md"
-      >
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          {isMobileMenuOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
-          
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden  fixed p-2  text-white bg-indigo-600 rounded-md"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
-          
+
           <div className="flex items-center space-x-4">
-            {/* <Link
-              to="/dashboard/leaderboard"
-              className="px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Leaderboard
-            </Link>
-            <Link
-              to="/dashboard/add-points"
-              className="px-3 py-2 rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Add Points
-            </Link> */}
+      
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -79,7 +66,7 @@ export default function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }: { isMo
                   </span>
                 )}
               </button>
-              
+
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg py-1">
                   <div className="px-4 py-2 text-sm font-medium text-gray-900 border-b">
@@ -114,9 +101,9 @@ export default function Navbar({ isMobileMenuOpen, setIsMobileMenuOpen }: { isMo
                 {/* Avatar with fallback */}
                 <div className="h-8 w-8 rounded-full bg-indigo-200 flex items-center justify-center">
                   {student?.avatarUrl ? (
-                    <img 
-                      src={student.avatarUrl} 
-                      alt="Profile" 
+                    <img
+                      src={student.avatarUrl}
+                      alt="Profile"
                       className="h-8 w-8 rounded-full"
                     />
                   ) : (

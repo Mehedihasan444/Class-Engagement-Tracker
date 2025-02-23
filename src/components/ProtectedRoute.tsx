@@ -24,6 +24,9 @@ export default function ProtectedRoute({ children }: { children: JSX.Element }) 
 
   if (loading) return <div>Loading...</div>;
   if (!student) return <Navigate to="/login" replace />;
+  if (!student.studentId?.trim() || !student.classSection?.trim()) {
+    return <Navigate to="/mandatory-profile-update" replace />;
+  }
   
   return children;
 } 

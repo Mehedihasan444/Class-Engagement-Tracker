@@ -39,7 +39,7 @@ export const getCurrentUser = (): Student | null => {
   return data ? JSON.parse(data) : null;
 };
 
-export const signIn = (email: string, password: string): Student | null => {
+export const signIn = (email: string): Student | null => {
   const students = getStoredData<Student>(STUDENTS_KEY);
   const student = students.find(s => s.email === email);
   

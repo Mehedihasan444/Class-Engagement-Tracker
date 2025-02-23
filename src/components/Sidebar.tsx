@@ -14,10 +14,10 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: { isM
   const activePath = match?.params.path;
 
   return (
-    <div className='sticky top-0 left-0 h-screen'>
+    <div className={`sticky top-0 left-0 h-screen `}>
       {/* Sidebar with responsive classes */}
-      <div className={`lg:w-64 h-full top-0 lg:relative inset-y-0 left-0 z-40 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } transition-transform duration-300 ease-in-out w-64 bg-gradient-to-b from-indigo-700 to-indigo-800 p-4 flex flex-col`}>
+      <div className={`lg:w-64 h-full top-0 lg:relative inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        } transition-transform duration-300 w-64 ease-in-out bg-gradient-to-b from-indigo-700 to-indigo-800 p-4 flex flex-col min-h-screen`}>
         <div className="my-8">
           <h2 className="text-white text-center flex justify-center text-xl font-bold  items-center gap-2 mb-6 px-2">
             <Trophy className="h-6 w-6 text-yellow-400" />
@@ -134,7 +134,7 @@ export default function Sidebar({ isMobileMenuOpen, setIsMobileMenuOpen }: { isM
       {isMobileMenuOpen && (
         <div
           onClick={() => setIsMobileMenuOpen(false)}
-          className="lg:hidden fixed inset-0 z-30 bg-black/50 transition-opacity"
+          className="lg:hidden fixed inset-0 -z-30 bg-black/50 transition-opacity"
         />
       )}
     </div>

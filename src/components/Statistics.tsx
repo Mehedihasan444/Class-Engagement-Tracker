@@ -1,4 +1,4 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { GanttChartSquare as ChartSquare } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -13,8 +13,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Bar, Line as ChartJSLine, Doughnut } from 'react-chartjs-2';
-import { format, startOfWeek, eachDayOfInterval, subDays } from 'date-fns';
-import { getPointsHistory, getLeaderboard } from '../lib/storage';
+import { format,  } from 'date-fns';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip as ToolTip } from 'recharts';
 import api from '../api';
 
@@ -30,10 +29,7 @@ ChartJS.register(
   Legend
 );
 
-interface StatData {
-  day: string;
-  points: number;
-}
+
 
 interface Stats {
   weekly: Array<{ day: string; points: number }>;
@@ -42,44 +38,27 @@ interface Stats {
 }
 
 export default function Statistics() {
-  const history = getPointsHistory();
-  const leaderboard = getLeaderboard();
   const [stats, setStats] = useState<Stats>({
-    weekly: [] as StatData[],
-    monthly: [] as StatData[],
+    weekly: [],
+    monthly: [],
     averages: { daily: 0, weekly: 0 }
   });
 
-  useEffect(() => {
-    const loadStats = async () => {
-      const { data } = await api.get('/points/statistics');
-      setStats(data);
-    };
-    loadStats();
-  }, []);
+  // Replace local storage data with server data
+  const totalPoints = stats.monthly.reduce((sum, day) => sum + day.points, 0);
+  const averagePoints = Math.round(stats.averages.daily);
+  const mostActiveDay = stats.weekly.reduce((max, day) =>
+    day.points > max.points ? day : max,
+    { day: '', points: 0 }
+  );
 
-  // Weekly Activity Chart Data
-  const last7Days = eachDayOfInterval({
-    start: startOfWeek(subDays(new Date(), 6)),
-    end: new Date(),
-  });
-
-  const dailyPoints = last7Days.map(day => {
-    const dayPoints = history.filter(entry => 
-      format(new Date(entry.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
-    ).reduce((sum, entry) => sum + entry.points, 0);
-    return {
-      date: format(day, 'EEE'),
-      points: dayPoints,
-    };
-  });
-
+  // Updated weekly chart data using server response
   const weeklyActivityData = {
-    labels: dailyPoints.map(d => d.date),
+    labels: stats.weekly.map(d => format(new Date(d.day), 'EEE')),
     datasets: [
       {
         label: 'Daily Points',
-        data: dailyPoints.map(d => d.points),
+        data: stats.weekly.map(d => d.points),
         borderColor: 'rgb(99, 102, 241)',
         backgroundColor: 'rgba(99, 102, 241, 0.5)',
         tension: 0.3,
@@ -87,12 +66,32 @@ export default function Statistics() {
     ],
   };
 
-  // Class Section Distribution
-  const sectionData = leaderboard.reduce((acc, student) => {
-    acc[student.classSection] = (acc[student.classSection] || 0) + student.totalPoints;
-    return acc;
-  }, {} as Record<string, number>);
+  // Fetch additional data for sections and contributors
+  const [sectionData, setSectionData] = useState<Record<string, number>>({});
+  const [topContributors, setTopContributors] = useState<Array<{ name: string, points: number }>>([]);
 
+  useEffect(() => {
+    const loadAllData = async () => {
+      try {
+        // Load main statistics
+        const { data } = await api.get('/points/statistics');
+        setStats(data);
+
+        // Load section distribution
+        const sections = await api.get('/points/sections');
+        setSectionData(sections.data);
+
+        // Load top contributors
+        const contributors = await api.get('/points/top-contributors');
+        setTopContributors(contributors.data);
+      } catch (error) {
+        console.error('Failed to load statistics:', error);
+      }
+    };
+    loadAllData();
+  }, []);
+
+  // Updated section chart data
   const sectionChartData = {
     labels: Object.keys(sectionData),
     datasets: [
@@ -115,14 +114,7 @@ export default function Statistics() {
     ],
   };
 
-  // Top Contributors Bar Chart
-  const topContributors = leaderboard
-    .slice(0, 5)
-    .map(student => ({
-      name: student.name,
-      points: student.totalPoints,
-    }));
-
+  // Updated contributors data
   const contributorsData = {
     labels: topContributors.map(c => c.name),
     datasets: [
@@ -135,14 +127,6 @@ export default function Statistics() {
       },
     ],
   };
-
-  // Calculate summary statistics
-  const totalPoints = history.reduce((sum, entry) => sum + entry.points, 0);
-  const totalStudents = leaderboard.length;
-  const averagePoints = totalStudents ? Math.round(totalPoints / totalStudents) : 0;
-  const mostActiveDay = dailyPoints.reduce((max, day) => 
-    day.points > max.points ? day : max
-  , dailyPoints[0]);
 
   return (
 
@@ -171,7 +155,7 @@ export default function Statistics() {
         <div className="bg-white p-6 rounded-lg shadow-lg">
           <h3 className="font-semibold mb-2">Daily Average</h3>
           <div className="text-3xl font-bold text-green-600">
-            {stats.averages.daily || 0}
+            {Number(stats.averages.daily || 0).toFixed(2)}
           </div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -196,7 +180,7 @@ export default function Statistics() {
           </div>
           <div className="bg-orange-50 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-orange-700">Total Students</h3>
-            <p className="text-3xl font-bold text-orange-600">{totalStudents}</p>
+            <p className="text-3xl font-bold text-orange-600">{stats.weekly.length}</p>
           </div>
           <div className="bg-green-50 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-green-700">Average Points</h3>
@@ -204,7 +188,7 @@ export default function Statistics() {
           </div>
           <div className="bg-pink-50 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-pink-700">Most Active Day</h3>
-            <p className="text-3xl font-bold text-pink-600">{mostActiveDay.date}</p>
+            <p className="text-3xl font-bold text-pink-600">{mostActiveDay.day}</p>
             <p className="text-sm text-pink-600">{mostActiveDay.points} points</p>
           </div>
         </div>

@@ -7,6 +7,7 @@ interface AuthState {
     _id: string; 
     name: string; 
     role: string;
+    studentId?: string;
     email?: string;
     classSection?: string;
     avatarUrl?: string;

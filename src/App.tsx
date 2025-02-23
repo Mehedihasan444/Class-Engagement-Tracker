@@ -12,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Profile from './components/Profile';
 import AdminPanel from './components/AdminPanel';
 import GoogleCallback from './components/GoogleCallback';
+import MandatoryProfileUpdate from './components/MandatoryProfileUpdate';
 
 function App() {
   const { initialize } = useAuthStore();
@@ -62,6 +63,11 @@ function App() {
         <Route 
           path="/auth/google/callback" 
           element={<GoogleCallback />} 
+        />
+
+        <Route 
+          path="/mandatory-profile-update" 
+          element={<MandatoryProfileUpdate />} 
         />
       </Routes>
     </BrowserRouter>
